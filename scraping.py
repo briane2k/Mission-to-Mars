@@ -21,7 +21,8 @@ def scrape_all():
         "news_paragraph": news_paragraph,
         "featured_image": featured_image(browser),
         "facts": mars_facts(),
-        "last_modified": dt.datetime.now()
+        "last_modified": dt.datetime.now(),
+        "hemispheres": get_hemisphere_image_urls(browser)
     }
 
     # Stop webdriver and return data
@@ -98,6 +99,52 @@ def mars_facts():
 
     # Convert dataframe into HTML format, add bootstrap
     return df.to_html(classes="table table-striped")
+
+def get_hemisphere_image_urls(browser):
+    # Visit Mars Hemespheres
+    url = 'https://astrogeology.usgs.gov/search/results?q=hemisphere+enhanced&k1=target&v1=Mars'
+    browser.visit(url)
+
+    # 2. Create a list to hold the images and titles.
+    hemisphere_image_urls = []
+
+    # 3. Write code to retrieve the image urls and titles for each hemisphere.
+    html = browser.html
+    news_soup = soup(html, 'html.parser')
+
+    # 3-a get all four of the media img containers
+    for hemesphereDivItems in news_soup.findAll('div', class_='item'):
+        
+        #Find the first img tag inside the Loop-DIV
+        imgsrc = hemesphereDivItems.find('img', class_='thumb').get('src')
+        
+        #Find the first div-desc tag inside the DIV tag
+        descdiv = hemesphereDivItems.find('div', class_='description')
+        
+        #Find the first A tag inside the div-desc tag
+        #Need to traverse to get the href
+        A_Title = descdiv.find('a', class_='itemLink')
+        #Find the first H3 tag inside the A_Title
+        #H3Title = hemesphereDivItems.find('h3').get_text()
+        H3Title = A_Title.find('h3').get_text()
+        
+        #Navigate to the full image page
+        browser.click_link_by_partial_text(H3Title)
+        
+        #store the href of the sample/full image
+        got_the_img_url = browser.find_link_by_text("Sample").first['href'];
+        print(got_the_img_url)
+        
+        #go back to previous page
+        browser.back()
+        
+        #append the dictionary into the list
+        hemisphere_image_urls.append({'img_url': got_the_img_url, 'title': H3Title})
+
+        # 4. Print the list that holds the dictionary of each image url and title.
+    
+    return hemisphere_image_urls
+
 
 if __name__ == "__main__":
 
